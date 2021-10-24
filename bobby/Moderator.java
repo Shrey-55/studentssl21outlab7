@@ -22,9 +22,9 @@ public class Moderator implements Runnable{
 				2) one needs a permit to modify thread info
 
 				*/
-                                          
-                                             
-
+				
+                this.board.moderatorEnabler.acquire();                          
+                this.board.threadInfoProtector.acquire();                             
 
 				/* 
 				look at the thread info, and decide how many threads can be 
@@ -43,18 +43,22 @@ public class Moderator implements Runnable{
 
 				//base case
 				
-				if (this.board.embryo){
-					                              
-                                        
-                                   
-                                              
+				if (this.board.embryo){                              
+					//this.board.registration.acquire();
+					this.board.playingThreads=1;
+					this.board.registration.release();
+					this.board.reentry.release();
+					this.board.threadInfoProtector.release();
+					//this.board.moderatorEnabler.release();                      
 					continue;
 				}
-				
-				
+				//this.board.reentry.acquire(this.board.totalThreads);
+				    
 				//find out how many newbies
-				int newbies = ;
-
+				
+				int newbies = this.board.totalThreads-this.board.playingThreads+this.board.quitThreads;
+				// System.out.println(newbies);
+				//this.board.registration.acquire(newbies);
 
 				/*
 				If there are no threads at all, it means Game Over, and there are no 
@@ -65,10 +69,13 @@ public class Moderator implements Runnable{
 				As good practice, we will release the "lock" we held. 
 				*/
 
-				                                  
-                                              
-            
-     
+				if(this.board.totalThreads==0){   
+					// System.out.println("m73");                               
+					this.board.dead=true;
+					this.board.threadInfoProtector.release();
+					this.board.moderatorEnabler.release();
+					return;
+				}
 				
 				/* 
 				If we have come so far, the game is afoot.
@@ -81,11 +88,14 @@ public class Moderator implements Runnable{
 				Release permits for threads to play, and the permit to modify thread info
 				*/
 
-				                                                    
-                               
-    
-                                             
-                                                          
+				// System.out.println(this.board.totalThreads);  
+				// System.out.println("m92");                                                  
+				this.board.registration.release(newbies);
+				this.board.reentry.release(this.board.totalThreads);
+				this.board.playingThreads=this.board.totalThreads;
+				this.board.quitThreads=0;
+                this.board.threadInfoProtector.release();                            
+                //this.board.moderatorEnabler.release();                                          
                                              
 			}
 			catch (InterruptedException ex){

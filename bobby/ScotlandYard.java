@@ -72,7 +72,7 @@ public class ScotlandYard implements Runnable{
 				
 
 				Socket socket = null;
-				boolean fugitiveIn;
+				boolean fugitiveIn=false;
 				
 				/*
 				listen for a client to play fugitive, and spawn the moderator.
@@ -80,45 +80,62 @@ public class ScotlandYard implements Runnable{
 				here, it is actually ok to edit this.board.dead, because the game hasn't begun
 				*/
 				
+				
 				do{
-			                    
-          
-                                    
-       
-                                       
-                         
-               
-      
+					try{
+						socket=server.accept();
+						fugitiveIn=socket.isConnected(); 
+						this.board.dead=false;
+						this.board.totalThreads++;
+					}
+					catch(SocketTimeoutException t){
+						// System.out.println("zx");
+						continue;
+					}
+					
+					
+					// this.board.installPlayer(-1);            
+					
+					
+                            
+
 				} while (!fugitiveIn);
 				
 				System.out.println(this.gamenumber);
 
 				// Spawn a thread to run the Fugitive
-                                             
-                                 
+                //System.out.println("z");
+				threadPool.execute(new ServerThread(this.board, -1, socket, this.port, this.gamenumber));                           
+                                
                             
                                                                                                   
                                              
-
+				// System.out.println("asa");
 				// Spawn the moderator
+				Thread moderThread=new Thread(new Moderator(this.board));
+				moderThread.start();
                                                   
                 
 				while (true){
+					
 					/*
 					listen on the server, accept connections
 					if there is a timeout, check that the game is still going on, and then listen again!
 					*/
-
+					Socket socket1=null;
+					
 					try {
-
+						socket1=server.accept();
+                        // System.out.println("s129");                                             
+						// this.board.moderatorEnabler.acquire();
+						// System.out.println("s131");
 					} 
 					catch (SocketTimeoutException t){
-                                               
-                            
-                                                
-             
-       
-                                               
+						
+						if(this.board.dead){
+							// System.out.println("y");
+							break;
+						}                                          
 						continue;
 					}
 					
@@ -132,23 +149,22 @@ public class ScotlandYard implements Runnable{
 
 					don't forget to release lock when done!
 					*/
-					                                         
-                          
-                     
-                                               
-            
-      
-                                                 
-                          
-                     
-                                               
-               
-      
-     
-                                                                                                          
-                                  
-
-                                              
+					//System.out.println(this.board.threadInfoProtector.availablePermits());                                         
+                    this.board.threadInfoProtector.acquire();     
+                    if(this.board.totalThreads==5){
+						socket1.close();
+						continue;
+					}else if(this.board.dead){
+						//System.out.println("s16"); 
+						socket1.close();
+						break;
+					}else{
+						//System.out.println("s162"); 
+						
+						threadPool.execute(new ServerThread(this.board, board.getAvailableID(), socket1, this.port, this.gamenumber));
+						this.board.totalThreads++;
+					}                           
+					this.board.threadInfoProtector.release();
 
 				}
 
@@ -157,9 +173,9 @@ public class ScotlandYard implements Runnable{
 				
 				kill threadPool (Careless Whispers BGM stops)
 				*/
-			            
-                        
-                               
+				moderThread.join(); 
+                this.server.close();        
+                this.threadPool.shutdownNow();              
     
 				System.out.println(String.format("Game %d:%d Over", this.port, this.gamenumber));
 				return;
@@ -170,6 +186,7 @@ public class ScotlandYard implements Runnable{
 				return;
 			}
 			catch (IOException i){
+				System.err.println("y");
 				return;
 			}
 			
