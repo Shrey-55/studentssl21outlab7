@@ -218,16 +218,16 @@ public class ServerThread implements Runnable{
 				// System.out.println(board.reentry.availablePermits());
 				board.reentry.acquire();
 				if (!this.registered){
-					this.registered=true;
-					board.registration.acquire();
-					board.threadInfoProtector.acquire();
-					this.board.installPlayer(this.id);
 					if(this.board.dead){
 						client_quit=true;
 						quit=true;
 						socket.close();
-						//break;//
+						break;//
 					}
+					this.registered=true;
+					board.registration.acquire();
+					board.threadInfoProtector.acquire();
+					this.board.installPlayer(this.id);
 					//this.board.installPlayer(this.board.getAvailableID());
 					board.threadInfoProtector.release();
 				}
@@ -247,16 +247,15 @@ public class ServerThread implements Runnable{
 				board.threadInfoProtector.acquire();
 				if(client_quit){
 					this.board.erasePlayer(id);
+				}else{
+					if(id==-1){
+						this.board.moveFugitive(target);
+					}
+					else{
+						// System.out.println("st 253");
+						this.board.moveDetective(id, target);
+					}
 				}
-				
-				if(id==-1){
-					this.board.moveFugitive(target);
-				}
-				else{
-					// System.out.println("st 253");
-					this.board.moveDetective(id, target);
-				}
-                
 				
 
 				

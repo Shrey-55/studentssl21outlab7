@@ -151,7 +151,7 @@ public class ScotlandYard implements Runnable{
 					*/
 					//System.out.println(this.board.threadInfoProtector.availablePermits());                                         
                     this.board.threadInfoProtector.acquire();     
-                    if(this.board.totalThreads==5){
+                    if(this.board.totalThreads==6){
 						socket1.close();
 						continue;
 					}else if(this.board.dead){
@@ -186,7 +186,7 @@ public class ScotlandYard implements Runnable{
 				return;
 			}
 			catch (IOException i){
-				System.err.println("y");
+				//System.err.println("y");
 				return;
 			}
 			
